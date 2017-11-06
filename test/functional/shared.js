@@ -95,6 +95,9 @@ function invalidAssets (account, option, badTransactions) {
 			case 'dapp':
 				transaction = node.lisk.dapp.createDapp(account.password, null, node.guestbookDapp);
 				break;
+			case 'inTransfer':
+				transaction = node.lisk.transfer.createInTransfer(node.guestbookDapp.id, Date.now(), node.gAccount.password);
+				break;
 		};
 	});
 
