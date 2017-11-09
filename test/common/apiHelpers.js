@@ -169,7 +169,9 @@ function getNextForgers (params, cb) {
 }
 
 function getAccounts (params, cb) {
-	http.get('/api/accounts?' + params, httpCallbackHelperWithStatus.bind(null, cb));
+	var url = '/api/accounts';
+	url = paramsHelper(url, params);
+	http.get(url, httpCallbackHelperWithStatus.bind(null, cb));
 }
 
 function getBlocks (params, cb) {
