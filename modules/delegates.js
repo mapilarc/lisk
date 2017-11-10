@@ -292,8 +292,7 @@ __private.checkDelegates = function (publicKey, votes, state, cb) {
 			return setImmediate(cb, 'Account not found');
 		}
 
-		// TODO: Snake case. logic for u_ must change
-		var delegates = (state === 'confirmed') ? account.delegates : account.u_delegates;
+		var delegates = (state === 'confirmed') ? account.username : null;
 		var existing_votes = Array.isArray(delegates) ? delegates.length : 0;
 		var additions = 0, removals = 0;
 
@@ -330,7 +329,7 @@ __private.checkDelegates = function (publicKey, votes, state, cb) {
 					return setImmediate(cb, 'Failed to add vote, delegate "' + account.username + '" already voted for');
 				}
 
-				if (math === '-' && (delegates === null || delegates.indexOf(publicKey) === -1)) {
+				if (math === '-' && (delegates === null  || delegates.indexOf(publicKey) === -1)) {
 					return setImmediate(cb, 'Failed to remove vote, delegate "' + account.username + '" was not voted for');
 				}
 
