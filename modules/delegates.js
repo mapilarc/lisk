@@ -268,7 +268,7 @@ __private.toggleForgingStatus = function (publicKey, secretKey, cb) {
 
 /**
  * Checks each vote integrity and controls total votes don't exceed active delegates.
- * Calls modules.accounts.getAccount() to validate delegate account and votes accounts.
+ * Calls modules.voters.getVotes() to validate delegate account and votes accounts.
  * @private
  * @implements module:accounts#Account#getAccount
  * @param {publicKey} publicKey
@@ -279,20 +279,9 @@ __private.toggleForgingStatus = function (publicKey, secretKey, cb) {
  */
 
 __private.checkDelegates = function (publicKey, votes, state, cb) {
-	if (!Array.isArray(votes)) {
-		return setImmediate(cb, 'Votes must be an array');
-	}
-
-	modules.accounts.getAccount({publicKey: publicKey}, function (err, account) {
-		if (err) {
-			return setImmediate(cb, err);
-		}
-
-		if (!account) {
-			return setImmediate(cb, 'Account not found');
-		}
-
-		var delegates = (state === 'confirmed') ? account.username : null;
+	library.db.query(sql.getVotes, { senderId: modules.accounts.generateAddressByPublicKey(publicKey) }).then(function (row) {
+   		// We get the delegates that the user has voted for here, if they have voted
+		var delegates = (row[0].delegates) ? row[0].delegates : [];
 		var existing_votes = Array.isArray(delegates) ? delegates.length : 0;
 		var additions = 0, removals = 0;
 
@@ -350,6 +339,9 @@ __private.checkDelegates = function (publicKey, votes, state, cb) {
 				return setImmediate(cb);
 			}
 		});
+	}).catch(function (err) {
+		library.logger.error(err.stack);
+		return setImmediate(cb, 'Failed to get voters for delegate: ' + publicKey);
 	});
 };
 

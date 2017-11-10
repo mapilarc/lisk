@@ -208,18 +208,10 @@ Vote.prototype.getBytes = function (transaction) {
 Vote.prototype.apply = function (transaction, block, sender, cb) {
 	var parent = this;
 
+	// FIXME: I don't do anything anymore
 	async.series([
 		function (seriesCb) {
 			self.checkConfirmedDelegates(transaction, seriesCb);
-		},
-		function (seriesCb) {
-			parent.scope.account.merge(sender.address, {
-				delegates: transaction.asset.votes,
-				blockId: block.id,
-				round: slots.calcRound(block.height)
-			}, function (err) {
-				return setImmediate(cb, err);
-			});
 		}
 	], cb);
 };
@@ -366,12 +358,20 @@ Vote.prototype.dbFields = [
  * @return {Object[]} table, fields, values.
  */
 Vote.prototype.dbSave = function (transaction) {
+	var publicKey;
+
+	try {
+		publicKey = Buffer.from(transaction.senderPublicKey, 'hex');
+	} catch (e) {
+		throw e;
+	}
+
 	return {
 		table: this.dbTable,
 		fields: this.dbFields,
 		values: {
 			transaction_id: transaction.id,
-			public_key: transaction.senderPublicKey,
+			public_key: publicKey,
 			votes: Array.isArray(transaction.asset.votes) ? transaction.asset.votes.join(',') : null
 		}
 	};
