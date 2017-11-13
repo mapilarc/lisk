@@ -157,7 +157,7 @@ Cache.prototype.onNewBlock = function (block, broadcast, cb) {
 			if (err) {
 				logger.error(['Error clearing keys with pattern:', pattern, ' on new block'].join(' '));
 			} else {
-				logger.debug(['keys with pattern:', pattern, 'cleared from cache on new block'].join(' '));
+				logger.info(['keys with pattern:', pattern, 'cleared from cache on new block'].join(' '));
 			}
 			mapCb(err);
 		});
@@ -180,7 +180,7 @@ Cache.prototype.onRoundChanged = function (data, cb) {
 		if (err) {
 			logger.error(['Error clearing keys with pattern:', pattern, ' round finish'].join(' '));
 		} else {
-			logger.debug(['keys with pattern: ', pattern, 'cleared from cache new Round'].join(' '));
+			logger.info(['keys with pattern: ', pattern, 'cleared from cache new Round'].join(' '));
 		}
 		return cb(err);
 	});
@@ -207,7 +207,7 @@ Cache.prototype.onTransactionsSaved = function (transactions, cb) {
 			if (err) {
 				logger.error(['Error clearing keys with pattern:', pattern, ' on delegate transaction'].join(' '));
 			} else {
-				logger.debug(['keys with pattern:', pattern, 'cleared from cache on delegate transaction'].join(' '));
+				logger.info(['keys with pattern:', pattern, 'cleared from cache on delegate transaction'].join(' '));
 			}
 			return cb(err);
 		});
