@@ -98,6 +98,9 @@ function invalidAssets (account, option, badTransactions) {
 			case 'inTransfer':
 				transaction = node.lisk.transfer.createInTransfer(node.guestbookDapp.id, Date.now(), node.gAccount.password);
 				break;
+			case 'outTransfer':
+				transaction = node.lisk.transfer.createOutTransfer(node.guestbookDapp.id, Date.now(), node.gAccount.password);
+				break;
 		};
 	});
 
