@@ -17,6 +17,33 @@ CREATE TABLE "public".accounts (address varchar(22) NOT NULL,
 );
 
 
+DROP FUNCTION public.validatemembalances();
+
+-- Create function that protects 'accounts' table balances to go negative
+-- WARNING: That function allows send from all genesis addresses
+CREATE OR REPLACE FUNCTION protect_accounts_balance() RETURNS TRIGGER LANGUAGE PLPGSQL AS $$
+	DECLARE
+		genesis_block_id VARCHAR(20);
+		result BOOL;
+	BEGIN
+		-- Get genesis block id
+		SELECT block_id INTO genesis_block_id FROM blocks WHERE height = 1 LIMIT 1;
+		-- Return TRUE if address belongs to sender of type 0 transaction that was included in genesis block
+		SELECT TRUE INTO result FROM transactions WHERE block_id = genesis_block_id AND type = 0 AND sender_address = NEW.address GROUP BY sender_address;
+
+		IF result IS NOT TRUE THEN
+			RAISE check_violation USING MESSAGE = 'Check violation - account balance cannot go negative';
+		END IF;
+	RETURN NEW;
+END $$;
+
+-- Create trigger that will execute 'protect_accounts_balance' function before update of account if update will result with negative balance
+CREATE TRIGGER protect_accounts_balance
+	BEFORE UPDATE ON accounts
+	FOR EACH ROW WHEN (NEW.balance < 0)
+	EXECUTE PROCEDURE protect_accounts_balance();
+
+
 CREATE OR REPLACE FUNCTION public.public_key_rollback() RETURNS TRIGGER LANGUAGE PLPGSQL AS $function$
 	BEGIN
 		NEW.public_key = NULL;
@@ -27,8 +54,6 @@ CREATE OR REPLACE FUNCTION public.public_key_rollback() RETURNS TRIGGER LANGUAGE
 	BEFORE UPDATE ON accounts
 	FOR EACH ROW WHEN (OLD.public_key_transaction_id IS NOT NULL AND NEW.public_key_transaction_id IS NULL)
 	EXECUTE PROCEDURE public_key_rollback();
-
-DROP FUNCTION public.validatemembalances();
 
 CREATE FUNCTION public.validate_accounts_balances() RETURNS TABLE(address VARCHAR(22), public_key TEXT, delegate VARCHAR(20), blockchain BIGINT, memory BIGINT, diff BIGINT) LANGUAGE PLPGSQL AS $$
 BEGIN
@@ -50,8 +75,7 @@ BEGIN
         WHERE a.balance <> m.balance;
 END $$;
 
-CREATE
-        OR REPLACE FUNCTION public.revert_mem_account() RETURNS TRIGGER LANGUAGE PLPGSQL AS $function$ BEGIN IF NEW."address" <> OLD."address" THEN
+CREATE OR REPLACE FUNCTION public.revert_mem_account() RETURNS TRIGGER LANGUAGE PLPGSQL AS $function$ BEGIN IF NEW."address" <> OLD."address" THEN
     RAISE WARNING 'Reverting change of address from % to %', OLD."address", NEW."address"; NEW."address" = OLD."address";
     END IF; IF NEW."u_username" <> OLD."u_username"
         AND OLD."u_username" IS NOT NULL THEN
@@ -70,6 +94,6 @@ CREATE
         AND OLD."secondPublicKey" IS NOT NULL THEN
     RAISE WARNING 'Reverting change of secondPublicKey from % to %', ENCODE(OLD."secondPublicKey", 'hex'), ENCODE(NEW."secondPublicKey", 'hex'); NEW."secondPublicKey" = OLD."secondPublicKey";
     END IF; RETURN NEW;
-    END $function$ ;
+END $function$ ;
 
 END;
