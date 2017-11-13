@@ -226,15 +226,6 @@ function Account (db, schema, logger, cb) {
 			expression: '(d."blocks_missed_count")::bigint'
 		},
 		{
-			name: 'virgin',
-			type: 'SmallInt',
-			filter: {
-				type: 'boolean'
-			},
-			conv: Boolean,
-			immutable: true
-		},
-		{
 			name: 'approval',
 			type: 'integer',
 			dependentFields: [
