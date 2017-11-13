@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS accounts CASCADE;
 CREATE TABLE "public".accounts (address varchar(22) NOT NULL,
 	transaction_id varchar(20),
   public_key bytea,
-  public_key_transaction_id varchar(20),
+  public_key_transaction_id VARCHAR(20) DEFAULT NULL REFERENCES trs(id) ON DELETE SET NULL,
   balance bigint DEFAULT 0 NOT NULL,
   CONSTRAINT pk_accounts PRIMARY KEY (address)
 );
@@ -28,11 +28,17 @@ CREATE OR REPLACE FUNCTION protect_accounts_balance() RETURNS TRIGGER LANGUAGE P
 	BEGIN
 		-- Get genesis block id
 		SELECT block_id INTO genesis_block_id FROM blocks WHERE height = 1 LIMIT 1;
+
+		-- Skip check if there is no genesis block in database (for case of deleting genesis block)
+		IF genesis_block_id IS NULL THEN
+		    RETURN NEW;
+		END IF;
+
 		-- Return TRUE if address belongs to sender of type 0 transaction that was included in genesis block
 		SELECT TRUE INTO result FROM transactions WHERE block_id = genesis_block_id AND type = 0 AND sender_address = NEW.address GROUP BY sender_address;
 
 		IF result IS NOT TRUE THEN
-			RAISE check_violation USING MESSAGE = 'Check violation - account balance cannot go negative';
+			RAISE check_violation USING MESSAGE = 'Check violation - account balance cannot go negative, address: ' || NEW.address || ', balance: ' || NEW.balance;
 		END IF;
 	RETURN NEW;
 END $$;
@@ -46,6 +52,7 @@ CREATE TRIGGER protect_accounts_balance
 
 CREATE OR REPLACE FUNCTION public.public_key_rollback() RETURNS TRIGGER LANGUAGE PLPGSQL AS $function$
 	BEGIN
+	RAISE NOTICE 'public_key_rollback';
 		NEW.public_key = NULL;
 		RETURN NEW;
 	END $function$ ;
