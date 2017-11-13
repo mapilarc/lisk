@@ -178,16 +178,6 @@ function Account (db, schema, logger, cb) {
 			conv: Number
 		},
 		{
-			name: 'blockId',
-			type: 'String',
-			filter: {
-				type: 'string',
-				minLength: 1,
-				maxLength: 20
-			},
-			conv: String
-		},
-		{
 			name: 'fees',
 			type: 'BigInt',
 			filter: {
