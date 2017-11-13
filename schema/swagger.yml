@@ -14,6 +14,8 @@ info:
 # all paths will be relative to the basePath specified
 # basePath: /v1
 
+basePath: /api
+
 # tags are used for organizing operations
 tags:
 - name: Accounts
@@ -41,7 +43,65 @@ tags:
 
 schemes:
   - https
+
 paths:
+  /peers:
+    x-swagger-router-controller: peers
+    get:
+      tags:
+      - Peers
+      summary: requests Peers data
+      operationId: getPeers
+      description:
+        This API call returns Peers related data
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/ip'
+        - $ref: '#/parameters/httpPort'
+        - $ref: '#/parameters/wsPort'
+        - $ref: '#/parameters/os'
+        - $ref: '#/parameters/version'
+        - $ref: '#/parameters/state'
+        - $ref: '#/parameters/height'
+        - $ref: '#/parameters/broadhash'
+        - $ref: '#/parameters/limit'
+        - $ref: '#/parameters/offset'
+        - in: query
+          name: sort
+          description: Fields to sort on to query
+          required: false
+          type: string
+          enum:
+            - height:asc
+            - height:desc
+            - version:asc
+            - version:desc
+      responses:
+        200:
+          description: Peers List
+          schema:
+            type: object
+            properties:
+              peers:
+                type: array
+                items:
+                  $ref: '#/definitions/Peer'
+              totalReturned:
+                type: integer
+                example: 1
+              totalCount:
+                type: integer
+                example: 100
+        400:
+          description: Malformed query or parameters
+          schema:
+            $ref: '#/definitions/ParamErrorResponse'
+        429:
+          description: Too many requests, exceeded rate limit.
+          schema:
+            $ref: '#/definitions/ResponseCode429'
+
   # Node
   /node/constants:
     x-swagger-router-controller: node
@@ -84,63 +144,210 @@ paths:
           schema:
             $ref: '#/definitions/ResponseCode429'
 
+parameters:
+  ip:
+    name: ip
+    in: query
+    description: IP of the node or delegate
+    type: string
+    format: ip
+  httpPort:
+    name: httpPort
+    in: query
+    description: Http port of the node or delegate
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 65535
+  wsPort:
+    name: wsPort
+    in: query
+    description: Web socket port for the node or delegate
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 65535
+  os:
+    name: os
+    in: query
+    description: OS of the node
+    type: string
+  version:
+    name: version
+    in: query
+    description: Lisk version run by node
+    type: string
+    format: version
+    minLength: 5
+    maxLength: 12
+  state:
+    name: state
+    in: query
+    description: Current state fo the network
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 2
+  height:
+    name: height
+    in: query
+    description: Current height of the network
+    type: integer
+    format: int32
+    minimum: 1
+  broadhash:
+    name: broadhash
+    in: query
+    description: Broadhash of the network
+    type: string
+    format: hex
+  limit:
+    in: query
+    name: limit
+    description: Specify limit for the result set
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 100
+  offset:
+    name: offset
+    in: query
+    description: Sepcify offset for the result set
+    type: integer
+    format: int32
+    minimum: 0
+
 definitions:
+  Peer:
+    type: object
+    required:
+      - ip
+      - httpPort
+      - wsPort
+      - os
+      - version
+      - state
+      - height
+      - broadhash
+      - nonce
+    properties:
+      ip:
+        type: string
+        example: 127.0.0.1
+        format: ip
+      httpPort:
+        type: integer
+        example: 8000
+        format: int32
+        minimum: 1
+        maximum: 65535
+      wsPort:
+        type: integer
+        example: 8001
+        format: int32
+        minimum: 1
+        maximum: 65535
+      os:
+        type: string
+        example: debian
+      version:
+        type: string
+        example: v0.8.0
+        format: version
+        minLength: 5
+        maxLength: 12
+      state:
+        type: integer
+        example: 2
+        format: int32
+        minimum: 0
+        maximum: 2
+      height:
+        type: integer
+        example: 123
+      broadhash:
+        type: string
+        example: 258974416d58533227c6a3da1b6333f0541b06c65b41e45cf31926847a3db1ea
+        format: hex
+      nonce:
+        type: string
+        example: sYHEDBKcScaAAAYg
+        minLength: 1
+
   Fees:
     type: object
+    required:
+      - send
+      - vote
+      - secondSignature
+      - delegate
+      - multisignature
+      - dappRegistration
+      - dappWithdrawal
+      - dappDeposit
+      - data
     properties:
       send:
         type: string
-        example: 10000000
+        example: '10000000'
       vote:
         type: string
-        example: 100000000
+        example: '100000000'
       secondSignature:
         type: string
-        example: 500000000
+        example: '500000000'
       delegate:
         type: string
-        example: 2500000000
+        example: '2500000000'
       multisignature:
         type: string
-        example: 500000000
+        example: '500000000'
       dappRegistration:
         type: string
-        example: 2500000000
+        example: '2500000000'
       dappWithdrawal:
         type: string
-        example: 10000000
+        example: '10000000'
       dappDeposit:
         type: string
-        example: 10000000
+        example: '10000000'
+      data:
+        type: string
+        example: '10000000'
 
   # State Related Models
   NodeConstants:
     type: object
     required:
-    - epoch
-    - milestone
-    - nethash
-    - reward
-    - supply
-    - build
-    - commit
-    - version
-    - fees
+      - epoch
+      - milestone
+      - nethash
+      - reward
+      - nonce
+      - supply
+      - build
+      - commit
+      - version
+      - fees
     properties:
       epoch:
         type: string
+        format: date-time
         example: '2016-05-24T17:00:00.000Z'
       milestone:
         type: string
-        example: 1081560729258
+        example: '500000000'
       build:
         type: string
-        example: "v09:54:35 12/04/2017\n"
+        example: 'v09:54:35 12/04/2017'
       commit:
         type: string
         example: 7199d4b67c3575d5f99d1c29436a02977eeb01a7
+        minLength: 40
+        maxLength: 40
       version:
         type: string
+        format: version
         example: v0.8.0
       nethash:
         type: string
@@ -150,33 +357,47 @@ definitions:
         example: '10575384500000000'
       reward:
         type: string
-        example: 500000000
+        example: '500000000'
+      nonce:
+        type: string
+        example: cJmXK66xxz644d67
+        minLength: 16
+        maxLength: 16
       fees:
         $ref: '#/definitions/Fees'
   NodeStatus:
     type: object
     required:
-    - syncing
-    - height
-    - networkHeight
-    - consensus
-    - broadhash
+      - broadhash
+      - consensus
+      - height
+      - loaded
+      - networkHeight
+      - syncing
     properties:
-      syncing:
-        type: boolean
-        example: false
-      height:
-        type: integer
-        example: 123
-      networkHeight:
-        type: integer
-        example: 123
-      consensus:
-        type: integer
-        example: 95
       broadhash:
         type: string
         example: 258974416d58533227c6a3da1b6333f0541b06c65b41e45cf31926847a3db1ea
+        minLength: 64
+        maxLength: 64
+      consensus:
+        type: integer
+        example: 95
+        minimum: 0
+        maximum: 100
+      height:
+        type: integer
+        example: 123
+        minimum: 1
+      loaded:
+        type: boolean
+        example: true
+      networkHeight:
+        type: integer
+        example: 123
+      syncing:
+        type: boolean
+        example: false
 
 # Response Code Templates
   ResponseCode429:
@@ -186,6 +407,70 @@ definitions:
         type: string
         example: Request limit exceeded. Please try again later.
 
-# Added by API Auto Mocking Plugin
-host: virtserver.swaggerhub.com
-basePath: /LiskHQ/Lisk/1.0.18
+  ParamErrorResponse:
+    type: object
+    description: The response generated in case of parameters validation
+    required:
+      - message
+      - errors
+    properties:
+      message:
+        type: string
+        description: A message stating some valdiation error occured
+        example: Validation Errors
+      errors:
+        type: array
+        description: An array of individual parameter errors
+        items:
+          $ref: '#/definitions/ParamError'
+
+
+  ParamError:
+    type: object
+    description: Collection of errors on a particular parameter
+    required:
+      - code
+      - name
+      - in
+      - message
+    properties:
+      code:
+        type: string
+        description: A valid error code explaining error
+        example: INVALID_REQUEST_PARAMETER
+      name:
+        type: string
+        description: Parameter name for which error triggered
+        example: offset
+      in:
+        type: string
+        description: Where the param was specified, e.g. path, query, form-data
+        example: query
+      message:
+        type: string
+        description: A detailed message explaining the error
+        example: Invalid parameter (offset) Value failed JSON Schema validation
+      errors:
+        type: array
+        description: Array of individual validation error for a particular param
+        items:
+          $ref: '#/definitions/ParamErrorMessage'
+
+  ParamErrorMessage:
+    type: object
+    description: Singular error detail for a parameter
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: string
+        description: A valid error code explaining error
+        example: MINIMUM
+      message:
+        type: string
+        description: A detailed message explaining the error
+        example: Value -1 is less than minimum 0
+      description:
+        type: string
+        description: Param description specified in schema

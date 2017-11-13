@@ -115,7 +115,10 @@ function Account (db, schema, logger, cb) {
 			name: 'votes',
 			type: 'BigInt',
 			filter: {
-				type: 'integer'
+				required: true,
+				type: 'integer',
+				minimum: 0,
+				maximum: constants.totalAmount
 			},
 			conv: Number,
 			expression: '("votes")::bigint'

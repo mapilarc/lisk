@@ -649,9 +649,10 @@ Transactions.prototype.shared = {
 		library.db.query(sql.count).then(function (transactionsCount) {
 			return setImmediate(cb, null, {
 				confirmed: transactionsCount[0].count,
-				multisignature: library.logic.transactionPool.multisignature.transactions.length,
+				unsigned: library.logic.transactionPool.multisignature.transactions.length,
 				unconfirmed: library.logic.transactionPool.unconfirmed.transactions.length,
-				queued: library.logic.transactionPool.queued.transactions.length
+				unprocessed: library.logic.transactionPool.queued.transactions.length,
+				total: transactionsCount[0].count + Object.keys(__private.transactionPool.unconfirmed.index).length + Object.keys(__private.transactionPool.queued.index).length + Object.keys(__private.transactionPool.multisignature.index).length
 			});
 		}, function (err) {
 			return setImmediate(cb, 'Unable to count transactions');

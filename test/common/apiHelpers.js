@@ -88,7 +88,7 @@ function sendTransaction (transaction, cb) {
 }
 
 function sendSignature (signature, transaction, cb) {
-	http.post('/api/signatures', {signature: {signature: signature, transaction: transaction.id}}, httpCallbackHelper.bind(null, cb));
+	http.post('/api/signatures', {signature: {signature: signature, transaction: transaction.id}}, httpResponseCallbackHelper.bind(null, cb));
 }
 
 function creditAccount (address, amount, cb) {
@@ -110,14 +110,6 @@ function getForgingStatus (params, cb) {
 	url = paramsHelper(url, params);
 
 	http.get(url, httpCallbackHelper.bind(null, cb));
-}
-
-function getNodeConstants (cb) {
-	http.get(swaggerPathFor('/node/constants'), httpCallbackHelper.bind(null, cb));
-}
-
-function getNodeStatus (cb) {
-	http.get(swaggerPathFor('/node/status'), httpCallbackHelper.bind(null, cb));
 }
 
 function getDelegates (params, cb) {
@@ -185,24 +177,6 @@ function getBlocks (params, cb) {
 	http.get(url, httpResponseCallbackHelper.bind(null, cb));
 }
 
-function getBlocksToWaitPromise () {
-	var count = 0;
-
-	return getUnconfirmedTransactionsPromise()
-		.then(function (res) {
-			count += res.count;
-			return getQueuedTransactionsPromise();
-		})
-		.then(function (res) {
-			count += res.count;
-			return getMultisignaturesTransactionsPromise();
-		})
-		.then(function (res) {
-			count += res.count;
-			return Math.ceil(count / constants.maxTxsPerBlock);
-		});
-}
-
 function waitForConfirmations (transactions, limitHeight) {
 	limitHeight = limitHeight || 10;
 
@@ -256,6 +230,17 @@ function getDappsCategories (params, cb) {
 	http.get(url, httpCallbackHelper.bind(null, cb));
 }
 
+/**
+ * Validate if the validation response contains error for a specific param
+ *
+ * @param {object} res - Response object got from server
+ * @param {string} param - Param name to check
+ */
+function expectSwaggerParamError (res, param) {
+	res.body.message.should.be.eql('Validation errors');
+	res.body.errors.map(function (p) { return p.name; }).should.contain(param);
+}
+
 var getTransactionPromise = node.Promise.promisify(getTransaction);
 var getTransactionsPromise = node.Promise.promisify(getTransactions);
 var getQueuedTransactionPromise = node.Promise.promisify(getQueuedTransaction);
@@ -265,8 +250,6 @@ var getUnconfirmedTransactionsPromise = node.Promise.promisify(getUnconfirmedTra
 var getMultisignaturesTransactionPromise = node.Promise.promisify(getMultisignaturesTransaction);
 var getMultisignaturesTransactionsPromise = node.Promise.promisify(getMultisignaturesTransactions);
 var getPendingMultisignaturesPromise = node.Promise.promisify(getPendingMultisignatures);
-var getNodeConstantsPromise = node.Promise.promisify(getNodeConstants);
-var getNodeStatusPromise = node.Promise.promisify(getNodeStatus);
 var creditAccountPromise = node.Promise.promisify(creditAccount);
 var sendTransactionPromise = node.Promise.promisify(sendTransaction);
 var sendSignaturePromise = node.Promise.promisify(sendSignature);
@@ -298,8 +281,6 @@ module.exports = {
 	getMultisignaturesTransactionPromise: getMultisignaturesTransactionPromise,
 	getMultisignaturesTransactionsPromise: getMultisignaturesTransactionsPromise,
 	getPendingMultisignaturesPromise: getPendingMultisignaturesPromise,
-	getNodeConstantsPromise: getNodeConstantsPromise,
-	getNodeStatusPromise: getNodeStatusPromise,
 	sendSignaturePromise: sendSignaturePromise,
 	sendTransactionPromise: sendTransactionPromise,
 	creditAccount: creditAccount,
@@ -325,9 +306,9 @@ module.exports = {
 	getBalance: getBalance,
 	getPublicKeyPromise: getPublicKeyPromise,
 	getBlocksPromise: getBlocksPromise,
-	getBlocksToWaitPromise: getBlocksToWaitPromise,
 	waitForConfirmations: waitForConfirmations,
 	getDappPromise: getDappPromise,
 	getDappsPromise: getDappsPromise,
-	getDappsCategoriesPromise: getDappsCategoriesPromise
+	getDappsCategoriesPromise: getDappsCategoriesPromise,
+	expectSwaggerParamError: expectSwaggerParamError
 };
