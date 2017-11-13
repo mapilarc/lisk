@@ -138,15 +138,6 @@ function Account (db, schema, logger, cb) {
 			expression: '("voters")::int'
 		},
 		{
-			name: 'rate',
-			type: 'BigInt',
-			filter: {
-				type: 'integer'
-			},
-			conv: Number,
-			expression: '("rate")::bigint'
-		},
-		{
 			name: 'delegates',
 			type: 'Text',
 			filter: {
