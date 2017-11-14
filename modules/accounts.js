@@ -136,22 +136,19 @@ Accounts.prototype.setAccountAndGet = function (data, cb) {
 		}
 	}
 
-	library.logic.account.get({address: address}, function (err ,account) {
+	library.logic.account.get({address: address}, function (err, account) {
 		if (err) {
 			return setImmediate(cb, err);
 		}
-		if (account === null) {
-			var secondPublicKey = (((data.transaction || {}).asset || {}).signature || {}).publicKey;
-			var multisignatures = ((data.transaction || {}).asset || {}).multisignatures;
-			
+		if (account === null && data.type === transactionTypes.SEND) {
 			account = {};
 			account.balance = 0;
 			account.address = address;
 			account.publicKey = data.publicKey;
-			account.secondPublicKey = secondPublicKey;
-			account.multisignatures = multisignatures;
+		} else if (account === null) {
+			err = 'Account does not exist';
 		}
-		return setImmediate(cb, null, account);
+		return setImmediate(cb, err, account);
 	});
 };
 
