@@ -59,7 +59,7 @@ describe('POST /api/transactions (type 0) transfer funds', function () {
 
 			return sendTransactionPromise(transaction).then(function (res) {
 				node.expect(res).to.have.property('status').to.equal(400);
-				node.expect(res).to.have.nested.property('body.message').that.to.equal('Account does not have enough LSK: ' + account.address + ' balance: 0');
+				node.expect(res).to.have.nested.property('body.message').that.to.equal('Account does not exist');
 				badTransactions.push(transaction);
 			});
 		});
@@ -140,7 +140,7 @@ describe('POST /api/transactions (type 0) transfer funds', function () {
 					// goodTransactions.push(transaction);
 				});
 			});
-
+			
 			it('using 1 should be ok', function () {
 				transaction = node.lisk.transaction.createTransaction(accountOffset.address, 1, node.gAccount.password, null, null, 1);
 
