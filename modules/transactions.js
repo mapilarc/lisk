@@ -611,12 +611,15 @@ Transactions.prototype.shared = {
 
 	getTransactionsCount: function (req, cb) {
 		library.db.query(sql.count).then(function (transactionsCount) {
+			
+			var pooledCount = library.logic.transactionPool.getUsage();
+			
 			return setImmediate(cb, null, {
 				confirmed: transactionsCount[0].count,
-				unsigned: library.logic.transactionPool.multisignature.transactions.length,
-				unconfirmed: library.logic.transactionPool.unconfirmed.transactions.length,
-				unprocessed: library.logic.transactionPool.queued.transactions.length,
-				total: transactionsCount[0].count + Object.keys(__private.transactionPool.unconfirmed.index).length + Object.keys(__private.transactionPool.queued.index).length + Object.keys(__private.transactionPool.multisignature.index).length
+				unsigned: pooledCount.pending,
+				unconfirmed: pooledCount.ready,
+				unprocessed: pooledCount.unverified,
+				total: transactionsCount[0].count + pooledCount.pending + pooledCount.ready + pooledCount.unverified
 			});
 		}, function (err) {
 			return setImmediate(cb, 'Unable to count transactions');
