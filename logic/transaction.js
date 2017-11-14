@@ -279,7 +279,6 @@ Transaction.prototype.checkConfirmed = function (transaction, cb) {
  * @returns {Object} With exceeded boolean and error: address, balance
  */
 Transaction.prototype.checkBalance = function (amount, balance, transaction, sender) {
-	console.log('tx logic: ' + JSON.stringify(sender));
 	var exceededBalance = new bignum(sender.balance.toString()).lessThan(amount);
 	var exceeded = (transaction.blockId !== this.scope.genesisblock.block.id && exceededBalance);
 
@@ -380,8 +379,7 @@ Transaction.prototype.verify = function (transaction, sender, requester, cb) {
 	if (!__private.types[transaction.type]) {
 		return setImmediate(cb, 'Unknown transaction type ' + transaction.type);
 	}
-	console.log('sender', sender);
-	console.log('requester', requester);
+
 	// Check for missing sender second signature
 	if (!transaction.requesterPublicKey && sender.secondPublicKey && !transaction.signSignature && transaction.blockId !== this.scope.genesisblock.block.id) {
 		return setImmediate(cb, 'Missing sender second signature');
@@ -424,25 +422,22 @@ Transaction.prototype.verify = function (transaction, sender, requester, cb) {
 		return setImmediate(cb, 'Invalid sender address');
 	}
 
-	// Determine multisignatures from sender or transaction asset
-	// TODO: Refactor for new schema
-	// var multisignatures = sender.multisignatures || sender.u_multisignatures || [];
-	var multisignatures = [];
-	// if (multisignatures.length === 0) {
-	// 	if (transaction.asset && transaction.asset.multisignature && transaction.asset.multisignature.keysgroup) {
-	//
-	// 		for (var i = 0; i < transaction.asset.multisignature.keysgroup.length; i++) {
-	// 			var key = transaction.asset.multisignature.keysgroup[i];
-	//
-	// 			if (!key || typeof key !== 'string') {
-	// 				return setImmediate(cb, 'Invalid member in keysgroup');
-	// 			}
-	//
-	// 			multisignatures.push(key.slice(1));
-	// 		}
-	// 	}
-	// }
-	//
+	var multisignatures = sender.multisignatures || [];
+	if (multisignatures.length === 0) {
+		if (transaction.asset && transaction.asset.multisignature && transaction.asset.multisignature.keysgroup) {
+
+			for (var i = 0; i < transaction.asset.multisignature.keysgroup.length; i++) {
+				var key = transaction.asset.multisignature.keysgroup[i];
+
+				if (!key || typeof key !== 'string') {
+					return setImmediate(cb, 'Invalid member in keysgroup');
+				}
+
+				multisignatures.push(key.slice(1));
+			}
+		}
+	}
+
 	// // Check requester public key
 	// if (transaction.requesterPublicKey) {
 	// 	multisignatures.push(transaction.senderPublicKey);
@@ -723,7 +718,7 @@ Transaction.prototype.apply = function (transaction, block, sender, cb) {
  */
 Transaction.prototype.undo = function (transaction, block, sender, cb) {
 	var amount = new bignum(transaction.amount.toString());
-	    amount = amount.plus(transaction.fee.toString()).toNumber();
+	amount = amount.plus(transaction.fee.toString()).toNumber();
 
 	this.scope.logger.trace('Logic/Transaction->undo', {sender: sender.address, balance: amount, blockId: block.id, round: slots.calcRound(block.height)});
 
