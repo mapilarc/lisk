@@ -24,7 +24,7 @@ describe('GET /api/accounts', function () {
 	function validateDelegateFields (res, account) {
 		node.expect(res).to.have.nested.property('body.accounts[0].delegate').that.is.an('object');
 		node.expect(res).to.have.nested.property('body.accounts[0].delegate.username').to.equal(account.delegateName);
-		node.expect(res).to.have.nested.property('body.accounts[0].delegate.rank').that.is.an('string');
+		node.expect(res).to.have.nested.property('body.accounts[0].delegate.rank').that.is.an('number');
 		node.expect(res).to.have.nested.property('body.accounts[0].delegate.productivity').that.is.an('number');
 		node.expect(res).to.have.nested.property('body.accounts[0].delegate.missedBlocks').that.is.an('string');
 		node.expect(res).to.have.nested.property('body.accounts[0].delegate.producedBlocks').that.is.an('string');
